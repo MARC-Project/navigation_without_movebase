@@ -35,8 +35,8 @@
     </node>
 
      <!--spark_ar_marker/-->
-    <node pkg="navigation_without_movebase" type="bezier_node" name="bezier_node" />
-    <!--node pkg="navigation_without_movebase" type="suduxifen_cmdvel" name="suduxifen_cmdvel" output="screen" /-->
+    <node pkg="navigation_without_movebase" type="bezier_path" name="bezier_path" />
+    <node pkg="navigation_without_movebase" type="bezier_cmdvel" name="bezier_cmdvel" output="screen" />
 
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(find navigation_without_movebase)/rviz/ar_track_camera.rviz"/>
 

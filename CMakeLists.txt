@@ -21,7 +21,8 @@ sensor_msgs tf move_base_msgs
 )
 
 
-add_message_files(FILES suduxifen.msg square_and_position.msg cmdvel_control.msg )
+add_message_files(FILES CvPoints.msg    CvPoint.msg 
+                        square_and_position.msg     cmdvel_control.msg )
 
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs )
 
@@ -61,15 +62,15 @@ target_link_libraries( simple_serial
   ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}
 )
 
-add_executable(bezier_node src/bezier_path.cpp)
-add_dependencies(bezier_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(bezier_node
+add_executable(bezier_path src/bezier_path.cpp)
+add_dependencies(bezier_path ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(bezier_path
   ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}
 )
 
-add_executable( suduxifen_cmdvel src/suduxifen_cmdvel.cpp)
-add_dependencies(suduxifen_cmdvel ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries( suduxifen_cmdvel
+add_executable( bezier_cmdvel src/bezier_cmd_vel.cpp)
+add_dependencies(bezier_cmdvel ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries( bezier_cmdvel
   ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}
 )
 
