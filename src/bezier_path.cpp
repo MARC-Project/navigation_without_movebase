@@ -23,11 +23,17 @@
 //#include "stdafx.h"
 #include <stdio.h>
 #include <iostream>
-#define NUM_STEPS 30 //越大，曲线越密，越逼近
+#define NUM_STEPS 100 //越大，曲线越密，越逼近
 #define PI 3.14159265
 
 using namespace std;
 
+/*
+ * Class: CvPoint
+ *-------------------
+ * A class that is used to represent a point (x,y). Notice that y direction is actually the
+ * z direction of camera.
+ */
 class CvPoint
 {
 public:
@@ -45,6 +51,12 @@ public:
     }
  
 }; 
+
+/* Class: Bezier_global_planner
+ * -----------------------------
+ * This class is the node. It receives ar pose messages and publishes an array containing points
+ * on the path.
+ */
 
 class Bezier_global_planner
 {
@@ -140,7 +152,7 @@ void curve4(vector<CvPoint> &p,
 
 
 /*
- * Function: bezier_curve_generator
+ * Function: bezier_curve_generator(const ar_track_alvar_msgs::AlvarMarkers req)
  * --------------------------------
  * This function generates a vector of points representing the path.
  */
@@ -193,9 +205,9 @@ void Bezier_global_planner::bezier_curve_generator(const ar_track_alvar_msgs::Al
         point[0].x=0.0;
         point[0].y=0.0;
         point[1].x=0.0;
-        point[1].y=0.4 * fabs(position_x) + 0.01 ;
-        point[2].x= position_x - cos(target_direction * PI / 180) * 0.6 * (fabs(position_x) + 0.01) ;
-        point[2].y= position_z - sin(target_direction * PI / 180) * 0.6 * (fabs(position_x) + 0.01) ;
+        point[1].y=0.4 * fabs(position_z) + 0.01 ;
+        point[2].x= position_x - cos(target_direction * PI / 180) * 0.6 * (fabs(position_z) + 0.01) ;
+        point[2].y= position_z - sin(target_direction * PI / 180) * 0.6 * (fabs(position_z) + 0.01) ;
         point[3].x=position_x;
         point[3].y=position_z;
         vector<CvPoint> curvePoint;
@@ -224,21 +236,19 @@ void Bezier_global_planner::bezier_curve_generator(const ar_track_alvar_msgs::Al
 }
 
 
- 
-
 
 /*
 int main()
 {
 	CvPoint point[4];
-	point[0].x=1.0;
-	point[0].y=4.0;
-	point[1].x=2.2;
-	point[1].y=5.0;
-	point[2].x=6;
-	point[2].y=3;
-	point[3].x=8;
-	point[3].y=9;
+	point[0].x=0.0;
+	point[0].y=0.0;
+	point[1].x=0;
+	point[1].y=0.8;
+	point[2].x=0.4;
+	point[2].y=2-0.6 * 1.732;
+	point[3].x=1;
+	point[3].y=2;
 	vector<CvPoint> curvePoint;
 	curve4(curvePoint,
 			point[0].x,point[0].y,
@@ -249,9 +259,12 @@ int main()
 	int i=0;
 	for(;i<curvePoint.size();i++)
 	{
-		cout<<"("<<curvePoint[i].x<<","<<curvePoint[i].y<<")";
-		if((i+1)%2==0)
-			cout<<endl;
+		cout<<curvePoint[i].x<<endl;
+	}
+    cout<<"-------------------------------------------------------------" << endl;
+    for(int i = 0;i<curvePoint.size();i++)
+	{
+		cout<<curvePoint[i].y<<endl;
 	}
 	cout<<endl<<"点的个数："<<i<<endl;
 	system("pause");

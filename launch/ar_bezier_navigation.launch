@@ -17,7 +17,7 @@
    
     <!--启动二维码识别和坐标变换节点/-->  
     <node pkg="tf" type="static_transform_publisher" name="world_to_cam" 
-          args="0 0 0.5 0 1.57 0 world usb_cam 10" />     
+          args="0 0 0 0 0 0 world usb_cam 10" />     
     <arg name="marker_size" default="5.5" />
     <arg name="max_new_marker_error" default="0.08" />
     <arg name="max_track_error" default="0.1" />
@@ -36,11 +36,33 @@
 
      <!--spark_ar_marker/-->
     <node pkg="navigation_without_movebase" type="bezier_path" name="bezier_path" />
-    <node pkg="navigation_without_movebase" type="bezier_cmdvel" name="bezier_cmdvel" output="screen" />
-
+    <node pkg="navigation_without_movebase" type="bezier_cmdvel" name="bezier_cmdvsel" output="screen">
+        <remap from="/cmd_vel" to="/raw_cmd_vel" />
+    </node>
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(find navigation_without_movebase)/rviz/ar_track_camera.rviz"/>
 
-   
+<!-- Velocity smoother node/-->
+  <arg name="node_name"             value="velocity_smoother"/>
+  <arg name="nodelet_manager_name"  value="nodelet_manager"/>
+  <arg name="config_file"           value="$(find navigation_without_movebase)/velocity_smoother.yaml"/>
+  <arg name="raw_cmd_vel_topic"     value="raw_cmd_vel"/>
+  <arg name="smooth_cmd_vel_topic"  value="cmd_vel"/>
+  <arg name="robot_cmd_vel_topic"   value="robot_cmd_vel"/>
+  <arg name="odom_topic"            value="odom"/>
+  
+  <!-- nodelet manager -->
+  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager"/>
+  
+  <!-- velocity smoother -->
+  <include file="$(find yocs_velocity_smoother)/launch/velocity_smoother.launch">
+    <arg name="node_name"             value="$(arg node_name)"/>
+    <arg name="nodelet_manager_name"  value="$(arg nodelet_manager_name)"/>
+    <arg name="config_file"           value="$(arg config_file)"/>
+    <arg name="raw_cmd_vel_topic"     value="$(arg raw_cmd_vel_topic)"/>
+    <arg name="smooth_cmd_vel_topic"  value="$(arg smooth_cmd_vel_topic)"/>
+    <arg name="robot_cmd_vel_topic"   value="$(arg robot_cmd_vel_topic)"/>
+    <arg name="odom_topic"            value="$(arg odom_topic)"/>
+  </include>
 
 
 </launch>

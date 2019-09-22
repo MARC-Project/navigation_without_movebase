@@ -24,8 +24,8 @@ class Bezier_local_planner
 public:  
     Bezier_local_planner()  
     {  
-        pub_raw_vel = n_.advertise<geometry_msgs::Twist>("cmd_vel", 100);      
-        sub_path = n_.subscribe("/path_points", 100, &Bezier_local_planner::velocity_generator, this);       
+        pub_raw_vel = n_.advertise<geometry_msgs::Twist>("raw_cmd_vel", 100);      
+        sub_path = n_.subscribe("path_points", 100, &Bezier_local_planner::velocity_generator, this);       
     }  
     
     ~Bezier_local_planner(){};
@@ -98,23 +98,63 @@ bool circleLeastFit(const std::vector<navigation_without_movebase::CvPoint> &poi
       
 void Bezier_local_planner::velocity_generator (const navigation_without_movebase::CvPoints::ConstPtr& msg){
 
+    geometry_msgs::Twist cmd_vel;
     if(!msg->points.empty()){
-        points_buf.points = msg->points;
         double position_x = msg->position_x;
         double position_z = msg->position_z;
         double target_direction = msg->target_direction;
+        points_buf.points = msg->points;
+        points_buf.position_x = position_x;
+        points_buf.position_z = position_z;
+        points_buf.target_direction = target_direction;
         vector<navigation_without_movebase::CvPoint> nearPoints;
-        for(int i=0;i < 10; i++){
+        //ROS_INFO("POINT 10: %f, %f", points_buf.points[9].x, points_buf.points[9].y );
+        //ROS_INFO("Distance: %f", points_buf.position_z);
+        for(int i=0;i < 20; i++){
             nearPoints.push_back(msg->points[i]);
         }
         double a,b,r;
         circleLeastFit(nearPoints, a, b, r);
         ROS_INFO("Radius is: %f", r);
-        geometry_msgs::Twist cmd_vel;
-        if(position_z <= 1.0 && fabs(position_x) <= 0.05) {
+        
+        // horizontal shift is small, radius is large or distance is large
+        if( (fabs(position_x) <= 0.05 && r >= 0.32) || position_z >= 1.5 ) {
             cmd_vel.linear.x = 0.5;
             cmd_vel.angular.z = 0;
         }
+
+        /*
+        // distance very small, just go straight
+        else if( points_buf.position_z < 0.34) {
+        ROS_INFO("Now close to the gate, keep moving!");
+        ROS_INFO("Distance: %f", points_buf.position_z);
+
+        if( points_buf.position_x <= 0.05 && fabs(points_buf.target_direction - 90) <= 7.5){
+                for(int i = 0; i <8; i++) {
+                    cmd_vel.linear.x = 0.5;
+                    cmd_vel.angular.z = 0;
+                    pub_raw_vel.publish(cmd_vel);
+                    ros::Duration(0.1).sleep();
+                }
+            }
+        else{
+                double rad_time = fabs((target_direction - 90) * PI / (180 * 0.15/r));
+                for(int i = 0; i <rad_time * 10; i++) {
+                    cmd_vel.linear.x = 0.15;
+                    cmd_vel.angular.z = 0.15/r;
+                    pub_raw_vel.publish(cmd_vel);
+                    ros::Duration(0.1).sleep();
+                }
+                for(int i = 0; i <8; i++) {
+                    cmd_vel.linear.x = 0.5;
+                    cmd_vel.angular.z = 0;
+                    pub_raw_vel.publish(cmd_vel);
+                    ros::Duration(0.1).sleep();
+                }
+            }
+
+        }*/
+        // radius is large, linear speed can be bigger
         else if(r >= 0.5 && position_x < 0){
             cmd_vel.linear.x = 0.2;
             cmd_vel.angular.z = 0.2 / r;
@@ -123,6 +163,7 @@ void Bezier_local_planner::velocity_generator (const navigation_without_movebase
             cmd_vel.linear.x = 0.2;
             cmd_vel.angular.z = -0.2 / r;
         }
+        // radius is small, linear speed should be small
         else if(r < 0.5 && position_x < 0) {
             cmd_vel.linear.x = 0.08;
             cmd_vel.angular.z = 0.08 / r;
@@ -133,11 +174,9 @@ void Bezier_local_planner::velocity_generator (const navigation_without_movebase
         }
         pub_raw_vel.publish(cmd_vel);
     }
+    /* TODO: how to deal with camera capture lost*/
+    
 }
-
-
-
-
 
 
 
