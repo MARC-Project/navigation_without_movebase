@@ -1,6 +1,7 @@
 /*
-接收二维码识别的话题消息，解析发送话题中的位置和姿态四元数信息，控制底盘机器人运动，跟踪二维码
-*/
+ * Node bezier_path: receive topic of QR code detection and obtain correct pose info. 
+ *Output path as a series of two-dimensional coordinates.
+ */
 #include <string>
 #include <vector>
 #include <sstream>
@@ -8,13 +9,13 @@
 #include <ros/types.h>
 #include <ros/message_operations.h>
 #include <std_msgs/Header.h>
-#include <geometry_msgs/Quaternion.h>   // Deal with quaternion info
-#include <geometry_msgs/Twist.h>   //运动信息发布
-#include <nav_msgs/Odometry.h>    //里程计信息订阅
+#include <geometry_msgs/Quaternion.h>   
+#include <geometry_msgs/Twist.h>  
+#include <nav_msgs/Odometry.h>    
 #include <cmath>
 
 #include <ar_track_alvar_msgs/AlvarMarker.h>
-#include <ar_track_alvar_msgs/AlvarMarkers.h>   //二维码信息订阅
+#include <ar_track_alvar_msgs/AlvarMarkers.h>   // QR code message
 #include <tf/tf.h>  
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
@@ -23,7 +24,7 @@
 //#include "stdafx.h"
 #include <stdio.h>
 #include <iostream>
-#define NUM_STEPS 100 //越大，曲线越密，越逼近
+#define NUM_STEPS 100 // number of dots fitting the actual curve.
 #define PI 3.14159265
 
 using namespace std;
@@ -158,23 +159,20 @@ void curve4(vector<CvPoint> &p,
  */
 void Bezier_global_planner::bezier_curve_generator(const ar_track_alvar_msgs::AlvarMarkers req)
 {
-     // 将接收到的消息打印出来
+     
     if (!req.markers.empty())
     {
         /* TODO: rank the distance if seeing multiple ar markers */
 
-        //二维码相对camera的位置关系
+        // obtain relative pose between QR code and camera
         // Note that z axis positive direction is the camera's facing direction,
         // and x axis positive direction is the camera's right hand side.
         ROS_INFO("I heard AR_marker Depth_z and Horizontal_offset_x :");
-        float position_z=req.markers[0].pose.pose.position.z * 0.9; //深度信息
-        float position_x=req.markers[0].pose.pose.position.x * 0.9; //水平偏移量
+        float position_z=req.markers[0].pose.pose.position.z * 0.9; // depth info
+        float position_x=req.markers[0].pose.pose.position.x * 0.9; // horizontal offset
         ROS_INFO("I heard position z: [%f]",req.markers[0].pose.pose.position.z);
         ROS_INFO("I heard position x: [%f]",req.markers[0].pose.pose.position.x);
 
-
-        //二维码相对camera的姿态关系四元数
-        //ROS_INFO("I heard AR_marker Quaternion:");
         float quaternion_x=req.markers[0].pose.pose.orientation.x;
         float quaternion_y=req.markers[0].pose.pose.orientation.y;
         float quaternion_z=req.markers[0].pose.pose.orientation.z;
@@ -184,10 +182,6 @@ void Bezier_global_planner::bezier_curve_generator(const ar_track_alvar_msgs::Al
         req.markers[0].pose.pose.orientation.y,
         req.markers[0].pose.pose.orientation.z,
         req.markers[0].pose.pose.orientation.w);
-        //ROS_INFO("I heard ar_quaternion_x: [%f]",q.x);
-        //ROS_INFO("I heard ar_quaternion_y: [%f]",q.y);
-        //ROS_INFO("I heard ar_quaternion_z: [%f]",q.z);
-        //ROS_INFO("I heard ar_quaternion_w: [%f]",q.w);
         
 
         // changing quaternion into RPY angle
@@ -236,7 +230,6 @@ void Bezier_global_planner::bezier_curve_generator(const ar_track_alvar_msgs::Al
 }
 
 
-
 /*
 int main()
 {
@@ -275,7 +268,7 @@ int main()
 
 int main(int argc, char **argv)
 {
-  // 初始化ROS节点
+
   ros::init(argc, argv, "bezier_global_planner");
 
   Bezier_global_planner globalPlanner = Bezier_global_planner();
